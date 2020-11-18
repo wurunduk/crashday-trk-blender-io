@@ -19,15 +19,16 @@ bl_info = {
     "category": "Import-Export"}
 
 classes = [
-    #gui.EXPORT_OT_cdtrk,
-    gui.MATERIAL_PT_p3d_materials,
-    gui.DATA_PT_p3d_lights,
-    gui.CDP3DMaterialProps,
-    gui.CDP3DLightProps
+    ops.EXPORT_OT_cdtrk
+    #gui.MATERIAL_PT_p3d_materials,
+    #gui.DATA_PT_p3d_lights,
+    #props.CDP3DMaterialProps,
+    #props.CDP3DLightProps
 ]
 
 def menu_func_export(self, context):
-    self.layout.operator(gui.EXPORT_OT_cdtrk.bl_idname, text="Crashday Track (.trk)")
+    self.layout.operator(ops.EXPORT_OT_cdtrk.bl_idname, text="Crashday Track (.trk)")
+    return
 
 def register():
     for cls in classes:
