@@ -1,9 +1,14 @@
 import bpy, bmesh, os
+import mathutils
 from bpy import context
 from mathutils import Vector
 from ..crashday import cfl, trk
 # https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
 # bounding box helper methods
+
+def error_no_cdp3d(self, context):
+    self.layout.label(text='You need to install cdp3d plugin to export trk maps!!')
+
 
 def slice(bm, start, end, segments):
     if segments == 1:
@@ -51,7 +56,6 @@ def slice_separate_objects(context, use_selection=False):
 
     for ob in objects:
         if ob.type == 'MESH':
-            print(ob.name)
             bm = bmesh.new()
             me = ob.data
             bm.from_mesh(me)
@@ -102,6 +106,10 @@ def slice_separate_objects(context, use_selection=False):
         if int_y == trk_width:
             int_y -=1
 
+        new_origin = Vector(((int_x - trk_height/2)*20 + 10, (int_y - trk_width/2)*20 + 10, 0.0)) - ob.location
+        ob.data.transform(mathutils.Matrix.Translation(-new_origin))
+        ob.matrix_world.translation += new_origin
+
         if int_x < 0 or int_x >= trk_height or int_y < 0 or int_y >= trk_width:
             print(ob.name, str(int_x), str(int_y), str(x), str(y), str(global_bbox_center))
 
@@ -125,6 +133,12 @@ def export_trk(operator, context, filepath='',
             
     slice_separate_objects(context, use_selection)
 
+    obj = bpy.data.objects.new('floor_level', None)
+    bpy.context.scene.collection.objects.link(obj)
+
+    obj.location = (0.0,0.0,0.0)
+    obj.empty_display_type = 'PLAIN_AXES'
+
     track           = trk.Track()
     track.author    = context.scene.cdtrk.author
     track.comment   = context.scene.cdtrk.comment
@@ -137,39 +151,57 @@ def export_trk(operator, context, filepath='',
     track.field_files_num = track.width*track.height
     track.field_files = []
     track.track_tiles = []
-    for x in range(track.width):
-        for y in range(track.height):
+    
+    for y in range(track.height):
+        for x in range(track.width):
             tile_name = 'tile_' + str(x) + '_' + str(y)
             track.field_files.append(tile_name + '.cfl')
+
+            # save track tile to .trk
             tt = trk.TrackTile()
-            tt.field_id = x + y*track.width
+            tt.field_id = x + (track.height - 1 - y)*track.width
             track.track_tiles.append(tt)
 
+            # create cfl of this tile
             c = cfl.CFL()
             c.tile_name = tile_name
-            #c.model = tile_name + '.p3d'
-            c.model = '4sjumper.p3d'
+            c.model = tile_name + '.p3d'
             
             if x == 0 and y == 0:
                 c.is_checkpoint = 1
-                c.checkpoint_area = (10.0, -10.0, 0, 10.0)
+                c.checkpoint_area = (-8.5, 4, 8.5, 0)
 
             file = open(work_path + '\\content\\tiles\\' + tile_name + '.cfl', 'w')
             c.write(file)
             file.close()
 
+            # export model of this tile
 
-    # add a CP
+            bpy.ops.object.select_all(action='DESELECT')
+
+            tile_col = bpy.data.collections.get(tile_name)
+            if tile_col:
+                for ob in tile_col.all_objects:
+                    ob.select_set(True)
+            else:
+                print('FAILED TO GET COLLECTION. THIS IS BAD?')
+
+            try:
+                bpy.ops.export_scene.cdp3d(filepath=work_path + '\\content\\models\\' + tile_name + '.p3d',
+                use_selection=True, use_mesh_modifiers=use_mesh_modifiers, use_empty_for_floor_level=True)
+            except AttributeError:
+                bpy.context.window_manager.popup_menu(error_no_cdp3d, title='No p3d plugin found!', icon='ERROR')
+
+    track.checkpoints_num = 1
+    track.checkpoints = [0]
 
     track.heightmap = []
     for i in range(track.width*track.height*16 + 1):
-        track.heightmap.append(1.0)
+        track.heightmap.append(0.0)
     
     file = open(filepath, 'wb')
     track.write(file)
     file.close()
-
-
 
     #bpy.ops.object.select_all(action='DESELECT')
     #bpy.ops.ed.undo()
