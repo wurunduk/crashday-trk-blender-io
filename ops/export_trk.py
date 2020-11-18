@@ -45,6 +45,8 @@ def slice_separate_objects(context, use_selection=False):
     trk_width = context.scene.cdtrk.width
     trk_height = context.scene.cdtrk.height
 
+    print('-slice start-')
+
     objects = []
     for ob in col.all_objects:
          if ob.visible_get():
@@ -53,6 +55,8 @@ def slice_separate_objects(context, use_selection=False):
                 objects.append(ob)
             elif ob.select_get():
                 objects.append(ob)
+
+    print('got all objects')
 
     for ob in objects:
         if ob.type == 'MESH':
@@ -68,17 +72,16 @@ def slice_separate_objects(context, use_selection=False):
             slice(bm, o, y, trk_height)
             bm.to_mesh(me)
 
+            print('sliced {}'.format(ob.name))
+
             ob.select_set(True)
             bpy.ops.mesh.separate(type='LOOSE')
             ob.select_set(False)
 
+            print('separated mesh\n')
+
     export_col = bpy.data.collections.new('TRK Exported Tiles')
     bpy.context.scene.collection.children.link(export_col)
-
-    for x in range(trk_width):
-        for y in range(trk_height):
-            tile_col = bpy.data.collections.new('tile_' + str(x) + '_' + str(y))
-            export_col.children.link(tile_col)
 
     objects = []
     for ob in col.all_objects:
@@ -89,34 +92,42 @@ def slice_separate_objects(context, use_selection=False):
             elif ob.select_get():
                 objects.append(ob)
 
+    print('got all objects again')
+
     for ob in objects:
-        local_bbox_center = 0.125 * sum((Vector(b) for b in ob.bound_box), Vector())
-        global_bbox_center = ob.matrix_world @ local_bbox_center
+        if ob.type == 'MESH':
+            local_bbox_center = 0.125 * sum((Vector(b) for b in ob.bound_box), Vector())
+            global_bbox_center = ob.matrix_world @ local_bbox_center
 
-        def clamp(num, min_value, max_value):
-            return max(min(num, max_value), min_value)
+            def clamp(num, min_value, max_value):
+                return max(min(num, max_value), min_value)
 
-        x = clamp(global_bbox_center[0], -(trk_width/2.0)*20, (trk_width/2.0)*20)
-        y = clamp(global_bbox_center[1], -(trk_height/2.0)*20, (trk_height/2.0)*20)
+            x = clamp(global_bbox_center[0], -(trk_width/2.0)*20, (trk_width/2.0)*20)
+            y = clamp(global_bbox_center[1], -(trk_height/2.0)*20, (trk_height/2.0)*20)
 
-        int_x = int((x + (trk_width/2.0)*20)/20)
-        if int_x == trk_width:
-            int_x -=1
-        int_y = int((y + (trk_height/2.0)*20)/20)
-        if int_y == trk_height:
-            int_y -=1
+            int_x = int((x + (trk_width/2.0)*20)/20)
+            if int_x == trk_width:
+                int_x -=1
+            int_y = int((y + (trk_height/2.0)*20)/20)
+            if int_y == trk_height:
+                int_y -=1
 
-        new_origin = Vector(((int_x - trk_width/2)*20 + 10, (int_y - trk_height/2)*20 + 10, 0.0)) - ob.location
-        ob.data.transform(mathutils.Matrix.Translation(-new_origin))
-        ob.matrix_world.translation += new_origin
+            new_origin = Vector(((int_x - trk_width/2)*20 + 10, (int_y - trk_height/2)*20 + 10, 0.0)) - ob.location
+            ob.data.transform(mathutils.Matrix.Translation(-new_origin))
+            ob.matrix_world.translation += new_origin
 
-        if int_x < 0 or int_x >= trk_width or int_y < 0 or int_y >= trk_height:
-            print(ob.name, str(int_x), str(int_y), str(x), str(y), str(global_bbox_center))
+            if int_x < 0 or int_x >= trk_width or int_y < 0 or int_y >= trk_height:
+                print(ob.name, str(int_x), str(int_y), str(x), str(y), str(global_bbox_center))
 
-        tile_col = bpy.data.collections.get('tile_' + str(int_x) + '_' + str(int_y))
-        if tile_col:
+            tile_col = bpy.data.collections.get(str(int_x) + '_' + str(int_y))
+            if tile_col is None:
+                tile_col = bpy.data.collections.new(str(int_x) + '_' + str(int_y))
+                export_col.children.link(tile_col)
+
             ob.users_collection[0].objects.unlink(ob)
             tile_col.objects.link(ob)
+    
+    print('-slice-')
 
 def export_trk(operator, context, filepath='',
                 use_selection=True,
@@ -133,6 +144,8 @@ def export_trk(operator, context, filepath='',
             
     slice_separate_objects(context, use_selection)
 
+    print('started building trk file')
+
     obj = bpy.data.objects.new('floor_level', None)
     bpy.context.scene.collection.objects.link(obj)
 
@@ -148,52 +161,65 @@ def export_trk(operator, context, filepath='',
     track.width     = context.scene.cdtrk.width
     track.height    = context.scene.cdtrk.height
 
-    track.field_files_num = track.width*track.height
+    # track.field_files_num = track.width*track.height
     track.field_files = []
     track.track_tiles = []
     
     for y in range(track.height):
         for x in range(track.width):
-            tile_name = 'tile_' + str(x) + '_' + str(y)
-            track.field_files.append(tile_name + '.cfl')
+            tile_name = str(x) + '_' + str(y)
+            tile_col = bpy.data.collections.get(tile_name)
+            if tile_col is None:
+                if 'void1.cfl' not in track.field_files:
+                    track.field_files.append('void1.cfl')
+            else:
+                track.field_files.append(tile_name + '.cfl')
 
-            # save track tile to .trk
+                # create cfl of this tile
+                c = cfl.CFL()
+                c.tile_name = tile_name
+                c.model = tile_name + '.p3d'
+            
+                if x == 0 and y == 0:
+                    c.is_checkpoint = 1
+                    c.checkpoint_area = (-8.5, 4, 8.5, 0)
+
+                file = open(work_path + '\\content\\tiles\\' + tile_name + '.cfl', 'w')
+                c.write(file)
+                file.close()
+
+                # export model of this tile
+
+                bpy.ops.object.select_all(action='DESELECT')
+
+                tile_col = bpy.data.collections.get(tile_name)
+                if tile_col:
+                    for ob in tile_col.all_objects:
+                        ob.select_set(True)
+                else:
+                    print('FAILED TO GET COLLECTION. THIS IS BAD?')
+
+                try:
+                    bpy.ops.export_scene.cdp3d(filepath=work_path + '\\content\\models\\' + tile_name + '.p3d',
+                    use_selection=True, use_mesh_modifiers=use_mesh_modifiers, use_empty_for_floor_level=True)
+                except AttributeError:
+                    bpy.context.window_manager.popup_menu(error_no_cdp3d, title='No p3d plugin found!', icon='ERROR')
+
+    for y in range(track.height):
+        for x in range(track.width):
             tt = trk.TrackTile()
-            tt.field_id = x + (track.height - 1 - y)*track.width
+            tile_name = str(x) + '_' + str(track.height - 1 - y)
+            tile_col = bpy.data.collections.get(tile_name)
+            if tile_col is None:
+                tt.field_id = track.field_files.index('void1.cfl')
+            else:
+                tt.field_id = track.field_files.index(tile_name + '.cfl')
             track.track_tiles.append(tt)
 
-            # create cfl of this tile
-            c = cfl.CFL()
-            c.tile_name = tile_name
-            c.model = tile_name + '.p3d'
-            
-            if x == 0 and y == 0:
-                c.is_checkpoint = 1
-                c.checkpoint_area = (-8.5, 4, 8.5, 0)
-
-            file = open(work_path + '\\content\\tiles\\' + tile_name + '.cfl', 'w')
-            c.write(file)
-            file.close()
-
-            # export model of this tile
-
-            bpy.ops.object.select_all(action='DESELECT')
-
-            tile_col = bpy.data.collections.get(tile_name)
-            if tile_col:
-                for ob in tile_col.all_objects:
-                    ob.select_set(True)
-            else:
-                print('FAILED TO GET COLLECTION. THIS IS BAD?')
-
-            try:
-                bpy.ops.export_scene.cdp3d(filepath=work_path + '\\content\\models\\' + tile_name + '.p3d',
-                use_selection=True, use_mesh_modifiers=use_mesh_modifiers, use_empty_for_floor_level=True)
-            except AttributeError:
-                bpy.context.window_manager.popup_menu(error_no_cdp3d, title='No p3d plugin found!', icon='ERROR')
+    track.field_files_num = len(track.field_files)
 
     track.checkpoints_num = 1
-    track.checkpoints = [0]
+    track.checkpoints = [17 + 15*20]
 
     track.heightmap = []
     for i in range(track.width*track.height*16 + 1):
@@ -202,6 +228,8 @@ def export_trk(operator, context, filepath='',
     file = open(filepath, 'wb')
     track.write(file)
     file.close()
+
+    print('Finished exporting .trk')
 
     #bpy.ops.object.select_all(action='DESELECT')
     #bpy.ops.ed.undo()

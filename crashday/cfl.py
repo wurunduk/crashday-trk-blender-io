@@ -6,7 +6,7 @@ class CFL:
         self.model = ''
         self.size = '1 1'
         self.type = 'GROUND_FLAT'
-        self.auto_list = 0
+        self.auto_list = 1
         self.substitution_model = 'NONE'
         self.maximum_random_bottom_shift = 0.0
         self.can_respawn = 1

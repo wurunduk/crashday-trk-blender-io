@@ -207,3 +207,8 @@ checkpoints: {}\n{}
 
         for i in range(self.width*self.height*16 + 1):
             w('<f', self.heightmap[i])
+
+# file = open('H://SteamLibrary//steamapps//common//Crashday//user//dust2.trk', 'rb')
+# t = Track()
+# t.read(file)
+# print(str(t))
