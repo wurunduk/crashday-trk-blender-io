@@ -60,12 +60,12 @@ def slice_separate_objects(context, use_selection=False):
             me = ob.data
             bm.from_mesh(me)
 
-            o = Vector((-(trk_height/2.0)*20, (trk_width/2.0)*20, 0.0)) - ob.location
-            x = Vector(( (trk_height/2.0)*20, (trk_width/2.0)*20, 0.0)) - ob.location
-            y = Vector((-(trk_height/2.0)*20, -(trk_width/2.0)*20, 0.0)) - ob.location
+            o = Vector((-(trk_width/2.0)*20, (trk_height/2.0)*20, 0.0)) - ob.location
+            x = Vector(( (trk_width/2.0)*20, (trk_height/2.0)*20, 0.0)) - ob.location
+            y = Vector((-(trk_width/2.0)*20, -(trk_height/2.0)*20, 0.0)) - ob.location
 
-            slice(bm, o, x, trk_height)
-            slice(bm, o, y, trk_width)
+            slice(bm, o, x, trk_width)
+            slice(bm, o, y, trk_height)
             bm.to_mesh(me)
 
             ob.select_set(True)
@@ -96,21 +96,21 @@ def slice_separate_objects(context, use_selection=False):
         def clamp(num, min_value, max_value):
             return max(min(num, max_value), min_value)
 
-        x = clamp(global_bbox_center[0], -(trk_height/2.0)*20, (trk_height/2.0)*20)
-        y = clamp(global_bbox_center[1], -(trk_width/2.0)*20, (trk_width/2.0)*20)
+        x = clamp(global_bbox_center[0], -(trk_width/2.0)*20, (trk_width/2.0)*20)
+        y = clamp(global_bbox_center[1], -(trk_height/2.0)*20, (trk_height/2.0)*20)
 
-        int_x = int((x + (trk_height/2.0)*20)/20)
-        if int_x == trk_height:
+        int_x = int((x + (trk_width/2.0)*20)/20)
+        if int_x == trk_width:
             int_x -=1
-        int_y = int((y + (trk_width/2.0)*20)/20)
-        if int_y == trk_width:
+        int_y = int((y + (trk_height/2.0)*20)/20)
+        if int_y == trk_height:
             int_y -=1
 
-        new_origin = Vector(((int_x - trk_height/2)*20 + 10, (int_y - trk_width/2)*20 + 10, 0.0)) - ob.location
+        new_origin = Vector(((int_x - trk_width/2)*20 + 10, (int_y - trk_height/2)*20 + 10, 0.0)) - ob.location
         ob.data.transform(mathutils.Matrix.Translation(-new_origin))
         ob.matrix_world.translation += new_origin
 
-        if int_x < 0 or int_x >= trk_height or int_y < 0 or int_y >= trk_width:
+        if int_x < 0 or int_x >= trk_width or int_y < 0 or int_y >= trk_height:
             print(ob.name, str(int_x), str(int_y), str(x), str(y), str(global_bbox_center))
 
         tile_col = bpy.data.collections.get('tile_' + str(int_x) + '_' + str(int_y))
