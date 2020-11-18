@@ -52,7 +52,7 @@ class Track:
         self.comment = ''
 
         self.style = 0
-        self.ambience = ''
+        self.ambience = 'morn.amb'
 
         self.field_files_num = 0
         self.field_files = []

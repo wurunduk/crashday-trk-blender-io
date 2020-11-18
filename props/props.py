@@ -1,7 +1,7 @@
 import bpy
 
 class CDTRKProps(bpy.types.PropertyGroup):
-    author_name     : bpy.props.StringProperty (
+    author          : bpy.props.StringProperty (
         name        = 'Author',
         default     = 'wurunduk :)'
     )
@@ -18,7 +18,7 @@ class CDTRKProps(bpy.types.PropertyGroup):
 
     ambience        : bpy.props.StringProperty (
         name        = 'Ambience',
-        default     = ''
+        default     = 'morn.amb'
     )
 
     scenery         : bpy.props.IntProperty (

@@ -14,7 +14,7 @@ class SCENE_PT_cdtrk(bpy.types.Panel):
         layout = self.layout
         settings = context.scene.cdtrk
 
-        layout.prop(settings, 'author_name')
+        layout.prop(settings, 'author')
         layout.prop(settings, 'comment')
         layout.prop(settings, 'style')
         layout.prop(settings, 'ambience')
