@@ -56,9 +56,9 @@ def slice_separate_objects(context, use_selection=False):
             me = ob.data
             bm.from_mesh(me)
 
-            o = Vector((-(trk_height/2.0)*40, (trk_width/2.0)*40, 0.0)) - ob.location
-            x = Vector(( (trk_height/2.0)*40, (trk_width/2.0)*40, 0.0)) - ob.location
-            y = Vector((-(trk_height/2.0)*40, -(trk_width/2.0)*40, 0.0)) - ob.location
+            o = Vector((-(trk_height/2.0)*20, (trk_width/2.0)*20, 0.0)) - ob.location
+            x = Vector(( (trk_height/2.0)*20, (trk_width/2.0)*20, 0.0)) - ob.location
+            y = Vector((-(trk_height/2.0)*20, -(trk_width/2.0)*20, 0.0)) - ob.location
 
             slice(bm, o, x, trk_height)
             slice(bm, o, y, trk_width)
@@ -73,7 +73,7 @@ def slice_separate_objects(context, use_selection=False):
 
     for x in range(trk_width):
         for y in range(trk_height):
-            tile_col = bpy.data.collections.new('Tile_' + str(x) + '_' + str(y))
+            tile_col = bpy.data.collections.new('tile_' + str(x) + '_' + str(y))
             export_col.children.link(tile_col)
 
     objects = []
@@ -92,20 +92,20 @@ def slice_separate_objects(context, use_selection=False):
         def clamp(num, min_value, max_value):
             return max(min(num, max_value), min_value)
 
-        x = clamp(global_bbox_center[0], -(trk_height/2.0)*40, (trk_height/2.0)*40)
-        y = clamp(global_bbox_center[1], -(trk_width/2.0)*40, (trk_width/2.0)*40)
+        x = clamp(global_bbox_center[0], -(trk_height/2.0)*20, (trk_height/2.0)*20)
+        y = clamp(global_bbox_center[1], -(trk_width/2.0)*20, (trk_width/2.0)*20)
 
-        int_x = int((x + (trk_height/2.0)*40)/40)
+        int_x = int((x + (trk_height/2.0)*20)/20)
         if int_x == trk_height:
             int_x -=1
-        int_y = int((y + (trk_width/2.0)*40)/40)
+        int_y = int((y + (trk_width/2.0)*20)/20)
         if int_y == trk_width:
             int_y -=1
 
         if int_x < 0 or int_x >= trk_height or int_y < 0 or int_y >= trk_width:
             print(ob.name, str(int_x), str(int_y), str(x), str(y), str(global_bbox_center))
 
-        tile_col = bpy.data.collections.get('Tile_' + str(int_x) + '_' + str(int_y))
+        tile_col = bpy.data.collections.get('tile_' + str(int_x) + '_' + str(int_y))
         if tile_col:
             ob.users_collection[0].objects.unlink(ob)
             tile_col.objects.link(ob)
@@ -139,10 +139,27 @@ def export_trk(operator, context, filepath='',
     track.track_tiles = []
     for x in range(track.width):
         for y in range(track.height):
-            track.field_files.append('Tile_' + str(x) + '_' + str(y) + '.cfl')
+            tile_name = 'tile_' + str(x) + '_' + str(y)
+            track.field_files.append(tile_name + '.cfl')
             tt = trk.TrackTile()
             tt.field_id = x + y*track.width
             track.track_tiles.append(tt)
+
+            c = cfl.CFL()
+            c.tile_name = tile_name
+            #c.model = tile_name + '.p3d'
+            c.model = '4sjumper.p3d'
+            
+            if x == 0 and y == 0:
+                c.is_checkpoint = 1
+                c.checkpoint_area = (10.0, -10.0, 0, 10.0)
+
+            file = open(work_path + '\\content\\tiles\\' + tile_name + '.cfl', 'w')
+            c.write(file)
+            file.close()
+
+
+    # add a CP
 
     track.heightmap = []
     for i in range(track.width*track.height*16 + 1):
@@ -151,6 +168,8 @@ def export_trk(operator, context, filepath='',
     file = open(filepath, 'wb')
     track.write(file)
     file.close()
+
+
 
     #bpy.ops.object.select_all(action='DESELECT')
     #bpy.ops.ed.undo()

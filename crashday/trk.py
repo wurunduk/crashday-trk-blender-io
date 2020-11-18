@@ -177,8 +177,8 @@ checkpoints: {}\n{}
 
         # this block is unused by the game
         for i in range(20):
-            #int a null terminated string
-            file.write(b'\x00\x00\x00')
+            #int and a null terminated string
+            file.write(b'\x00\x00\x00\x00\x00')
 
         w('<B', self.style)
         w_str(self.ambience)

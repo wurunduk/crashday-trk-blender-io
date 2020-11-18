@@ -4,7 +4,7 @@ class CFL:
     def __init__(self):
         self.tile_name = ''
         self.model = ''
-        self.size = '2 2'
+        self.size = '1 1'
         self.type = 'GROUND_FLAT'
         self.auto_list = 0
         self.substitution_model = 'NONE'
