@@ -1,46 +1,40 @@
 import bpy
 
-class CDP3DMaterialProps(bpy.types.PropertyGroup):
-    material_name   : bpy.props.StringProperty (
-        name        = 'Texture Name',
-        default     = 'colwhite',
-        description = 'Name of the .tga or .dds texture to be used'
+class CDTRKProps(bpy.types.PropertyGroup):
+    author_name     : bpy.props.StringProperty (
+        name        = 'Author',
+        default     = 'wurunduk :)'
     )
 
-    material_type   : bpy.props.EnumProperty(
-        name        = 'Material Type',
-        items       = (
-            ('FLAT', 'Flat', 'Flat shading'),
-            ('FLAT_METAL', 'Flat Metal', 'Flat shading for metals?'),
-            ('GOURAUD', 'Gouraud', 'Smooth shading'),
-            ('GOURAUD_METAL', 'Gouraud Metal', 'Smooth shading for metals?'),
-            ('GOURAUD_METAL_ENV', 'Gouraud Metal Env', 'Smooth shading for environment metals'),
-            ('SHINING', 'Shining', 'Shining material. Used for glowing signs, makes colors shinier.')
-        ),
-        default     = 'GOURAUD'
+    comment         : bpy.props.StringProperty (
+        name        = 'Comment',
+        default     = ''
     )
 
-    def register():
-        bpy.types.Material.cdp3d = bpy.props.PointerProperty(type=CDP3DMaterialProps)
+    style           : bpy.props.IntProperty (
+        name        = 'Style',
+        default     = 0
+    )    
 
-class CDP3DLightProps(bpy.types.PropertyGroup):
-    corona          : bpy.props.BoolProperty(
-        name        = 'Enable Corona',
-        default     = True,
-        description = "Enable corona effect for this light"
+    ambience        : bpy.props.StringProperty (
+        name        = 'Ambience',
+        default     = ''
     )
 
-    lens_flares     : bpy.props.BoolProperty(
-        name        = 'Enable Lens Flares',
-        default     = True,
-        description = "Enable lens flares for this light"
+    scenery         : bpy.props.IntProperty (
+        name        = 'Scenery',
+        default     = 0
     )
 
-    lightup_environment : bpy.props.BoolProperty(
-        name        = 'Enable Environment Lighting',
-        default     = True,
-        description = "Should this lamp lightup environment (only works for tiles)"
+    width           : bpy.props.IntProperty (
+        name        = 'Width',
+        default     = 5
+    )
+
+    height          : bpy.props.IntProperty (
+        name        = 'Height',
+        default     = 5
     )
 
     def register():
-        bpy.types.Light.cdp3d = bpy.props.PointerProperty(type=CDP3DLightProps)
+        bpy.types.Scene.cdtrk = bpy.props.PointerProperty(type=CDTRKProps)

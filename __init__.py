@@ -19,7 +19,9 @@ bl_info = {
     "category": "Import-Export"}
 
 classes = [
-    ops.EXPORT_OT_cdtrk
+    ops.EXPORT_OT_cdtrk,
+    gui.SCENE_PT_cdtrk,
+    props.CDTRKProps
     #gui.MATERIAL_PT_p3d_materials,
     #gui.DATA_PT_p3d_lights,
     #props.CDP3DMaterialProps,
