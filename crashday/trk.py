@@ -208,7 +208,16 @@ checkpoints: {}\n{}
         for i in range(self.width*self.height*16 + 1):
             w('<f', self.heightmap[i])
 
-# file = open('H://SteamLibrary//steamapps//common//Crashday//user//dust2.trk', 'rb')
+import base64
+
+file = open('H://SteamLibrary//steamapps//common//Crashday//user//mod_testing//de_dust2//wvoid.p3d', 'rb')
+encode = base64.b64encode(file.read())
+print(encode.decode('ascii'))
+
+st = 'UDNEAqCTGz0AGi04oJMbPVRFWDkFAAABdHJhbnNwLnRnYQBMSUdIVFM5BQAAAABNRVNIRVM5BQAAAQBTVUJNRVNIOQUAAG1haW4ADwAAAAAAAAAAAAAAAAAAAKCTGz0AGi04oJMbPQAAAgAAAAAAAAAAAAAABACgk5s8AAAAAKCTmzygk5u8AAAAAKCTmzygk5s8AAAAAKCTm7ygk5u8AAAAAKCTm7wCAAMAAAAAAAAAgD8AAAAAgD8AAAAAAQAAAAAAAAAAAAMAAAAAAAAAgD8CAAAAgD8AAIA/AAAAAIA/AAAAAFVTRVI5BQAAAAAAAA=='
+b64b = st.encode('ascii')
+mb = base64.b64decode(b64b)
+print(mb)
 # t = Track()
 # t.read(file)
 # print(str(t))

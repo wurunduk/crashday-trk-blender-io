@@ -1,5 +1,6 @@
 import bpy, bmesh, os
 import mathutils
+import base64
 from bpy import context
 from mathutils import Vector
 from ..crashday import cfl, trk
@@ -134,9 +135,11 @@ def separate_objects_into_collections(context, use_selection=False):
         pos = get_grid_position(global_bbox_center)
         
         # center object origin to tile grid center for correct export
-        new_origin = Vector(((pos[0] - trk_width/2)*20 + 10, (pos[1] - trk_height/2)*20 + 10, 0.0)) - ob.location
-        ob.data.transform(mathutils.Matrix.Translation(-new_origin))
-        ob.matrix_world.translation += new_origin
+        if ob.type == 'MESH':
+            new_origin = Vector(((pos[0] - trk_width/2)*20 + 10, (pos[1] - trk_height/2)*20 + 10, 0.0)) - ob.location
+            ob.data.transform(mathutils.Matrix.Translation(-new_origin))
+            ob.matrix_world.translation += new_origin
+            
 
         col_name = str(pos[0]) + '_' + str(pos[1])
 
@@ -147,6 +150,24 @@ def separate_objects_into_collections(context, use_selection=False):
 
         ob.users_collection[0].objects.unlink(ob)
         tile_col.objects.link(ob)
+
+def create_void_tile_files(path, name):
+    void_model = 'UDNEAqCTGz0AGi04oJMbPVRFWDkFAAABdHJhbnNwLnRnYQBMSUdIVFM5BQAAAABNRVNIRVM5BQAAAQBTVUJNRVNIOQUAAG1haW4ADwAAAAAAAAAAAAAAAAAAAKCTGz0AGi04oJMbPQAAAgAAAAAAAAAAAAAABACgk5s8AAAAAKCTmzygk5u8AAAAAKCTmzygk5s8AAAAAKCTm7ygk5u8AAAAAKCTm7wCAAMAAAAAAAAAgD8AAAAAgD8AAAAAAQAAAAAAAAAAAAMAAAAAAAAAgD8CAAAAgD8AAIA/AAAAAIA/AAAAAFVTRVI5BQAAAAAAAA=='
+    
+    # create and save .cfl
+    c = cfl.CFL()
+    c.tile_name = name
+    c.model = name + '.p3d'
+
+    file = open(path + '\\content\\tiles\\' + name + '.cfl', 'w')
+    c.write(file)
+    file.close()
+
+    b64bytes = void_model.encode('ascii')
+    model_bytes = base64.b64decode(b64bytes)
+    file = open(path + '\\content\\models\\' + name + '.p3d', 'wb')
+    file.write(model_bytes)
+    file.close()
 
 def export_trk(operator, context, filepath='',
                 use_selection=False,
@@ -190,13 +211,17 @@ def export_trk(operator, context, filepath='',
     # hardcoded start position for now, in tiles
     start_position = [17, 15]
 
+    empty_tile_name = 'wvoid'
+
     for y in range(track.height):
         for x in range(track.width):
             tile_name = str(x) + '_' + str(y)
             tile_col = bpy.data.collections.get(tile_name)
             if tile_col is None:
-                if 'void.cfl' not in track.field_files:
-                    track.field_files.append('void.cfl')
+                # this tile is empty, create a void tile if not present yet
+                if empty_tile_name + '.cfl' not in track.field_files:
+                    track.field_files.append(empty_tile_name + '.cfl')
+                    create_void_tile_files(work_path, empty_tile_name)
             else:
                 track.field_files.append(tile_name + '.cfl')
 
@@ -237,7 +262,7 @@ def export_trk(operator, context, filepath='',
             tile_name = str(x) + '_' + str(track.height - 1 - y)
             tile_col = bpy.data.collections.get(tile_name)
             if tile_col is None:
-                tt.field_id = track.field_files.index('void.cfl')
+                tt.field_id = track.field_files.index(empty_tile_name + '.cfl')
             else:
                 tt.field_id = track.field_files.index(tile_name + '.cfl')
             track.track_tiles.append(tt)
