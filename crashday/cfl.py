@@ -2,14 +2,14 @@ import struct
 
 class CFL:
     def __init__(self):
-        self.tile_name = ''
-        self.model = ''
+        self.tile_name = 'empty'
+        self.model = 'empty.p3d'
         self.size = '1 1'
         self.type = 'GROUND_FLAT'
-        self.auto_list = 1
+        self.auto_list = 0
         self.substitution_model = 'NONE'
         self.maximum_random_bottom_shift = 0.0
-        self.can_respawn = 1
+        self.can_respawn = 0
         self.is_checkpoint = 0
         self.checkpoint_area = (0.0, 0.0, 0.0, 0.0)
         self.ai_free_roam = 1

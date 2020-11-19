@@ -27,16 +27,16 @@ class EXPORT_OT_cdtrk(bpy.types.Operator, ExportHelper):
     filter_glob     : StringProperty(default='*.trk',
                                      options={'HIDDEN'})
 
-    use_selection   : BoolProperty(
-        name        = "Selection Only",
-        description = "Export selected objects only",
-        default     = False
-    )
+    # use_selection   : BoolProperty(
+    #     name        = "Selection Only",
+    #     description = "Export selected objects only",
+    #     default     = False
+    # )
 
     use_mesh_modifiers: BoolProperty(
         name        = "Apply Mesh Modifiers",
         description = "Apply modifiers",
-        default     = True
+        default     = False
     )
 
     def execute(self, context):
