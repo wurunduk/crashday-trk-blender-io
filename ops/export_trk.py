@@ -139,7 +139,6 @@ def separate_objects_into_collections(context, use_selection=False):
             new_origin = Vector(((pos[0] - trk_width/2)*20 + 10, (pos[1] - trk_height/2)*20 + 10, 0.0)) - ob.location
             ob.data.transform(mathutils.Matrix.Translation(-new_origin))
             ob.matrix_world.translation += new_origin
-            
 
         col_name = str(pos[0]) + '_' + str(pos[1])
 
