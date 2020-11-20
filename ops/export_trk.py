@@ -4,12 +4,13 @@ import base64
 from bpy import context
 from mathutils import Vector
 from ..crashday import cfl, trk
-# https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
-# bounding box helper methods
+
 
 def error_no_cdp3d(self, context):
     self.layout.label(text='You need to install cdp3d plugin to export trk maps!!')
 
+# cutting
+# https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
 
 def slice(bm, start, end, segments):
     if segments == 1:

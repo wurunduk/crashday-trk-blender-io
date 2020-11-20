@@ -13,7 +13,7 @@ from bpy_extras.io_utils import (
 
 from . import export_trk
 
-if "bpy" in locals():
+if 'bpy' in locals():
     import importlib
     importlib.reload(export_trk)
 
@@ -28,20 +28,20 @@ class EXPORT_OT_cdtrk(bpy.types.Operator, ExportHelper):
                                      options={'HIDDEN'})
 
     # use_selection   : BoolProperty(
-    #     name        = "Selection Only",
-    #     description = "Export selected objects only",
+    #     name        = 'Selection Only',
+    #     description = 'Export selected objects only',
     #     default     = False
     # )
 
     use_mesh_modifiers: BoolProperty(
-        name        = "Apply Mesh Modifiers",
-        description = "Apply modifiers",
+        name        = 'Apply Mesh Modifiers',
+        description = 'Apply modifiers',
         default     = False
     )
 
     def execute(self, context):
         keywords = self.as_keywords(ignore=('filter_glob',
-                                            "check_existing",))
+                                            'check_existing',))
 
         export_trk.export_trk(self, context, **keywords)
 

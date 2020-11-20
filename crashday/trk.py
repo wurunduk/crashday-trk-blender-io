@@ -108,8 +108,9 @@ checkpoints: {}\n{}
                 if char == b'\x00':
                     break
                 string += char
-            return str(string, "utf-8", "replace")
+            return str(string, 'utf-8', 'replace')
 
+        # CDTRK or CDTR2 signature
         signature = file.read(5)
 
         if signature == b'CDTRK':
@@ -167,7 +168,7 @@ checkpoints: {}\n{}
             file.write(struct.pack(format, *args))
 
         def w_str(st):
-            w('<%ds' % (len(st)+1), st.encode("ASCII", "replace"))
+            w('<%ds' % (len(st)+1), st.encode('ASCII', 'replace'))
 
         file.write(b'CDTRK')
 

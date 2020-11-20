@@ -3,33 +3,29 @@ from .gui import gui
 from .ops import ops
 from .props import props
 
-if "bpy" in locals():
+if 'bpy' in locals():
     import importlib
     importlib.reload(gui)
     importlib.reload(ops)
     importlib.reload(props)
 
 bl_info = {
-    "name": "Crashday Track Editor",
-    "author": "Wurunduk",
-    "blender": (2, 83, 0),
-    "location": "File > Import-Export",
-    "version": (1, 0, 0),
-    "support": 'COMMUNITY',
-    "category": "Import-Export"}
+    'name': 'Crashday Track Exporter',
+    'author': 'Wurunduk',
+    'blender': (2, 83, 0),
+    'location': 'File > Import-Export',
+    'version': (1, 1, 0),
+    'support': 'COMMUNITY',
+    'category': 'Import-Export'}
 
 classes = [
     ops.EXPORT_OT_cdtrk,
     gui.SCENE_PT_cdtrk,
     props.CDTRKProps
-    #gui.MATERIAL_PT_p3d_materials,
-    #gui.DATA_PT_p3d_lights,
-    #props.CDP3DMaterialProps,
-    #props.CDP3DLightProps
 ]
 
 def menu_func_export(self, context):
-    self.layout.operator(ops.EXPORT_OT_cdtrk.bl_idname, text="Crashday Track (.trk)")
+    self.layout.operator(ops.EXPORT_OT_cdtrk.bl_idname, text='Crashday Track (.trk)')
     return
 
 def register():
@@ -44,5 +40,5 @@ def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     register()
