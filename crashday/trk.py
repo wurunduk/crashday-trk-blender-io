@@ -1,5 +1,24 @@
 import struct
 
+def rf(file, format):
+    answer = struct.unpack(format, file.read(struct.calcsize(format)))
+    return answer[0] if len(answer) == 1 else answer
+
+def rf_str(file):
+    string = b''
+    while True:
+        char = struct.unpack('<c', file.read(1))[0]
+        if char == b'\x00':
+            break
+        string += char
+    return str(string, 'utf-8', 'replace')
+
+def wf(file, format, *args):
+    file.write(struct.pack(format, *args))
+
+def wf_str(file, st):
+    wf(file, '<%ds' % (len(st)+1), st.encode('ASCII', 'replace'))
+
 class TrackTile:
     def __init__(self):
         self.field_id = 0
@@ -13,21 +32,20 @@ class TrackTile:
         )
 
     def read(self, file):
-        data = struct.unpack('<H3B', file.read(struct.calcsize('<H3B')))
-        self.field_id = data[0]
-        self.rotation = data[1]
-        self.is_mirrored = data[2]
-        self.height = data[3]
+        (self.field_id,
+        self.rotation,
+        self.is_mirrored,
+        self.height,
+        ) = rf(file, '<H3B')
 
     def write(self, file):
-        data = struct.pack('<H3B', self.field_id, 
+        wf(file, '<H3B', self.field_id, 
         self.rotation, self.is_mirrored, self.height)
-        file.write(data)
 
 class DynamicObject:
     def __init__(self):
         self.object_id = 0
-        self.position = (0.0,0.0,0.0)
+        self.position = [0.0,0.0,0.0]
         self.rotation = 0
 
     def __str__(self):
@@ -35,15 +53,13 @@ class DynamicObject:
         return 'dynamic: {}, pos: {}, rotation: {}'.format(self.object_id, formated_pos, self.rotation)
 
     def read(self, file):
-        data = struct.unpack('<H4f', file.read(struct.calcsize('<H4f')))
-        self.object_id = data[0]
-        self.position = (data[1], data[2], data[3])
-        self.rotation = data[4]
+        (self.object_id,
+        self.position[0], self.position[2], self.position[1],
+        self.rotation) = rf(file, '<H4f')
 
     def write(self, file):
-        data = struct.pack('<H4f', self.object_id,
+        wf(file, '<H4f', self.object_id,
         self.position[0], self.position[1], self.position[2], self.rotation)
-        file.write(data)
 
 class Track:
     def __init__(self):
@@ -98,17 +114,10 @@ checkpoints: {}\n{}
 
     def read(self, file):
         def r(format):
-            answer = struct.unpack('<' + format, file.read(struct.calcsize('<' + format)))
-            return answer[0] if len(answer) == 1 else answer
+            return rf(file, format)
 
         def r_str():
-            string = b''
-            while True:
-                char = struct.unpack('<c', file.read(1))[0]
-                if char == b'\x00':
-                    break
-                string += char
-            return str(string, 'utf-8', 'replace')
+            return rf_str(file)
 
         # CDTRK or CDTR2 signature
         signature = file.read(5)
@@ -165,10 +174,10 @@ checkpoints: {}\n{}
 
     def write(self, file):
         def w(format, *args):
-            file.write(struct.pack(format, *args))
+            wf(file, format, *args)
 
         def w_str(st):
-            w('<%ds' % (len(st)+1), st.encode('ASCII', 'replace'))
+            wf_str(file, st)
 
         file.write(b'CDTRK')
 
@@ -201,6 +210,7 @@ checkpoints: {}\n{}
             d.write(file)
 
         w('<H', self.checkpoints_num)
+        print(self.checkpoints)
         for c in self.checkpoints:
             w('<H', c)
 

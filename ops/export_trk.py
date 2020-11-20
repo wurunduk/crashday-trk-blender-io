@@ -5,6 +5,10 @@ from bpy import context
 from mathutils import Vector
 from ..crashday import cfl, trk
 
+if 'bpy' in locals():
+    import importlib
+    importlib.reload(trk)
+    importlib.reload(cfl)
 
 def error_no_cdp3d(self, context):
     self.layout.label(text='You need to install cdp3d plugin to export trk maps!!')
