@@ -78,13 +78,13 @@ def slice_separate_objects(context, use_selection=False):
             slice(bm, o, y, trk_height)
             bm.to_mesh(me)
 
-            print('sliced {}'.format(ob.name))
+            print('done slicing mesh: {}'.format(ob.name))
 
             ob.select_set(True)
             bpy.ops.mesh.separate(type='LOOSE')
             ob.select_set(False)
 
-            print('separated mesh\n')
+            print('loose parts separated\n')
 
     print('-slice end-')
 
@@ -277,10 +277,12 @@ def export_trk(operator, context, filepath='',
     track.checkpoints = [start_position[0] + (track.height - 1 - start_position[1])*20]
 
     track.heightmap = []
-    for i in range(track.width*track.height*16 + 1):
+    for i in range(track.width*track.height*16 + (track.width + track.height)*4 + 1):
         track.heightmap.append(0.0)
     
     print('Finished building .trk')
+
+    print(str(track))
 
     file = open(filepath, 'wb')
     track.write(file)

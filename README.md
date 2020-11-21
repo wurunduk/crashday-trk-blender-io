@@ -27,6 +27,8 @@ You should have a main mesh on every tile after cutting. If no main mesh was pre
 **Answer:** Apply rotations and scaling to the objects.
 
 ## TODO:
+- add placeholder icons for editor
+- add checkpoint stuff
 - add limits to the trk options in blender
 - APPLY ROTATION N SCALE
 - deal with selection only stuff

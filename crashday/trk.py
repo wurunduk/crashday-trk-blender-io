@@ -59,7 +59,7 @@ class DynamicObject:
 
     def write(self, file):
         wf(file, '<H4f', self.object_id,
-        self.position[0], self.position[1], self.position[2], self.rotation)
+        self.position[0], self.position[2], self.position[1], self.rotation)
 
 class Track:
     def __init__(self):
@@ -139,38 +139,37 @@ checkpoints: {}\n{}
             r('i')
             r_str()
 
-        self.style = r('B')
+        self.style = r('<B')
         self.ambience = r_str()
-        self.field_files_num = r('H')
+        self.field_files_num = r('<H')
         
         for i in range(self.field_files_num):
             self.field_files.append(r_str())
 
-        self.width, self.height = r('HH')
-
+        self.width, self.height = r('<HH')
         for i in range(self.width*self.height):
             tile = TrackTile()
             tile.read(file)
             self.track_tiles.append(tile)
 
-        self.dyn_object_files_num = r('H')
+        self.dyn_object_files_num = r('<H')
         for i in range(self.dyn_object_files_num):
             self.dyn_object_files.append(r_str())
 
-        self.dyn_objects_num = r('H')
+        self.dyn_objects_num = r('<H')
         for i in range(self.dyn_objects_num):
             d = DynamicObject()
             d.read(file)
             self.dyn_objects.append(d)
 
-        self.checkpoints_num = r('H')
+        self.checkpoints_num = r('<H')
         for i in range(self.checkpoints_num):
-            self.checkpoints.append(r('H'))
+            self.checkpoints.append(r('<H'))
 
-        self.permission, self.ground_bumpyness, self.scenery = r('BfB')
+        self.permission, self.ground_bumpyness, self.scenery = r('<BfB')
 
-        for i in range(self.width*self.height*16 + 1):
-           self.heightmap.append(r('f'))
+        for i in range(self.width*self.height*16 + (self.width + self.height)*4 + 1):
+           self.heightmap.append(r('<f'))
 
     def write(self, file):
         def w(format, *args):
@@ -210,11 +209,19 @@ checkpoints: {}\n{}
             d.write(file)
 
         w('<H', self.checkpoints_num)
-        print(self.checkpoints)
         for c in self.checkpoints:
             w('<H', c)
 
         w('<BfB', self.permission, self.ground_bumpyness, self.scenery)
 
-        for i in range(self.width*self.height*16 + 1):
+        for i in range(self.width*self.height*16 + (self.width + self.height)*4 + 1):
             w('<f', self.heightmap[i])
+
+def test_load_trk(path):
+    file = open(path, 'rb')
+    trk = Track()
+    trk.read(file)
+    print(trk)
+    file.close()
+
+# test_load_trk('H:\\SteamLibrary\\steamapps\\common\\Crashday\\user\\SA_map2.trk')
