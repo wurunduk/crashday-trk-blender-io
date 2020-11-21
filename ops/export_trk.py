@@ -163,7 +163,7 @@ def create_void_tile_files(path, name):
     c.tile_name = name
     c.model = name + '.p3d'
 
-    file = open(path + '\\content\\tiles\\' + name + '.cfl', 'w')
+    file = open(path + '\\content\\tiles\\' + name, 'w')
     c.write(file)
     file.close()
 
@@ -173,78 +173,37 @@ def create_void_tile_files(path, name):
     file.write(model_bytes)
     file.close()
 
-def export_trk(operator, context, filepath='',
-                use_selection=False,
-                use_mesh_modifiers=False):
+def get_tile_name_and_collection(x, y):
+    tile_name = str(x) + '_' + str(y)
+    if len(tile_name) <= 4:
+        tile_name = tile_name + 'x'*(4-len(tile_name))
+    tile_col = bpy.data.collections.get(tile_name)
+    return tile_name, tile_col
 
-    work_path = '\\'.join(filepath.split('\\')[0:-1])
-    print('\nExporting trk to {}'.format(filepath))
-
-    create_folders(work_path)
-
-    # enter object mode
-    if bpy.ops.object.mode_set.poll():
-        bpy.ops.object.mode_set(mode='OBJECT')
-    
-    #slice objects with tile grid
-    slice_separate_objects(context, use_selection)
-
-    # separate all sliced object into corresponding collections
-    separate_objects_into_collections(context, use_selection=use_selection)
-
-    print('started building trk file')
-
-    obj = bpy.data.objects.new('floor_level', None)
-    bpy.context.scene.collection.objects.link(obj)
-
-    obj.location = (0.0,0.0,0.0)
-    obj.empty_display_type = 'PLAIN_AXES'
-
-    track           = trk.Track()
-    track.author    = context.scene.cdtrk.author
-    track.comment   = context.scene.cdtrk.comment
-    track.style     = context.scene.cdtrk.style
-    track.ambience  = context.scene.cdtrk.ambience
-    track.scenery   = context.scene.cdtrk.scenery
-    track.width     = context.scene.cdtrk.width
-    track.height    = context.scene.cdtrk.height
-
-    track.field_files = []
-    track.track_tiles = []
-    
-    # hardcoded start position for now, in tiles
-    start_position = [17, 15]
-
-    empty_tile_name = 'wvoid'
-
-    for y in range(track.height):
-        for x in range(track.width):
-            tile_name = str(x) + '_' + str(y)
-            tile_col = bpy.data.collections.get(tile_name)
-            if tile_col is None:
-                # this tile is empty, create a void tile if not present yet
-                if empty_tile_name + '.cfl' not in track.field_files:
-                    track.field_files.append(empty_tile_name + '.cfl')
-                    create_void_tile_files(work_path, empty_tile_name)
-            else:
-                track.field_files.append(tile_name + '.cfl')
-
-                # create cfl of this tile
+def export_cfl_files(work_path, height, width, checkpoints_list, context):
+    for y in range(height):
+        for x in range(width):
+            tile_name, tile_col = get_tile_name_and_collection(x, y)
+            if tile_col is not None:
                 c = cfl.CFL()
                 c.tile_name = tile_name
                 c.model = tile_name + '.p3d'
                 c.can_respawn = 1
             
-                if x == start_position[0] and y == start_position[1]:
+                if (x, y) in checkpoints_list:
                     c.is_checkpoint = 1
                     c.checkpoint_area = (-8.5, 4, 8.5, 0)
 
-                file = open(work_path + '\\content\\tiles\\' + tile_name + '.cfl', 'w')
+                file = open(work_path + '\\content\\tiles\\' + tile_name, 'w')
                 c.write(file)
                 file.close()
 
-                # export model of this tile
-
+def export_p3d_files(work_path, use_mesh_modifiers, height, width, context):
+    # export model of this tile
+    for y in range(height):
+        for x in range(width):
+            tile_name, tile_col = get_tile_name_and_collection(x, y)
+            if tile_col is not None:
                 bpy.ops.object.select_all(action='DESELECT')
 
                 tile_col = bpy.data.collections.get(tile_name)
@@ -260,15 +219,44 @@ def export_trk(operator, context, filepath='',
                 except AttributeError:
                     bpy.context.window_manager.popup_menu(error_no_cdp3d, title='No p3d plugin found!', icon='ERROR')
 
+def export_trk_file(work_path, file_path, context):
+    print('Started building trk file')
+    track           = trk.Track()
+    track.author    = context.scene.cdtrk.author
+    track.comment   = context.scene.cdtrk.comment
+    track.style     = context.scene.cdtrk.style
+    track.ambience  = context.scene.cdtrk.ambience
+    track.scenery   = context.scene.cdtrk.scenery
+    track.width     = context.scene.cdtrk.width
+    track.height    = context.scene.cdtrk.height
+
+    track.field_files = []
+    track.track_tiles = []
+    
+    # hardcoded start position for now, in tiles
+    start_position = [int(track.width/2), int(track.height/2)]
+
+    empty_tile_name = 'wvoid'
+
+    for y in range(track.height):
+        for x in range(track.width):
+            tile_name, tile_col = get_tile_name_and_collection(x, y)
+            if tile_col is None:
+                # this tile is empty, create a void tile if not present yet
+                if empty_tile_name not in track.field_files:
+                    track.field_files.append(empty_tile_name)
+                    create_void_tile_files(work_path, empty_tile_name)
+            else:
+                track.field_files.append(tile_name)
+
     for y in range(track.height):
         for x in range(track.width):
             tt = trk.TrackTile()
-            tile_name = str(x) + '_' + str(track.height - 1 - y)
-            tile_col = bpy.data.collections.get(tile_name)
+            tile_name, tile_col = get_tile_name_and_collection(x, y)
             if tile_col is None:
-                tt.field_id = track.field_files.index(empty_tile_name + '.cfl')
+                tt.field_id = track.field_files.index(empty_tile_name)
             else:
-                tt.field_id = track.field_files.index(tile_name + '.cfl')
+                tt.field_id = track.field_files.index(tile_name)
             track.track_tiles.append(tt)
 
     track.field_files_num = len(track.field_files)
@@ -282,11 +270,44 @@ def export_trk(operator, context, filepath='',
     
     print('Finished building .trk')
 
-    print(str(track))
-
-    file = open(filepath, 'wb')
+    file = open(file_path, 'wb')
     track.write(file)
-    file.close()
+    track.close()
+
+def export_trk(operator, context, file_path='',
+                use_selection=False,
+                use_mesh_modifiers=False):
+
+    work_path = '\\'.join(file_path.split('\\')[0:-1])
+    print('\nExporting trk to {}'.format(file_path))
+
+    create_folders(work_path)
+
+    # enter object mode
+    if bpy.ops.object.mode_set.poll():
+        bpy.ops.object.mode_set(mode='OBJECT')
+    
+    #slice objects with tile grid
+    slice_separate_objects(context, use_selection)
+
+    # separate all sliced object into corresponding collections
+    separate_objects_into_collections(context, use_selection=use_selection)
+
+    # TODO: check if floor_level exists
+    obj = bpy.data.objects.new('floor_level', None)
+    bpy.context.scene.collection.objects.link(obj)
+
+    obj.location = (0.0,0.0,0.0)
+    obj.empty_display_type = 'PLAIN_AXES'
+
+    h = context.scene.cdtrk.height
+    w = context.scene.cdtrk.width
+
+    cp_pos = (int(w/2), int(h/2))
+
+    export_trk_file(work_path, file_path, context)
+    export_cfl_files(work_path, h, w, [cp_pos],context)
+    export_p3d_files(work_path, use_mesh_modifiers, h, w, context)
 
     print('Finished exporting .trk')
 

@@ -1,7 +1,7 @@
 import bpy
 
 class CDTRKProps(bpy.types.PropertyGroup):
-    author     : bpy.props.StringProperty (
+    author          : bpy.props.StringProperty (
         name        = 'Author',
         default     = 'wurunduk :)'
     )
