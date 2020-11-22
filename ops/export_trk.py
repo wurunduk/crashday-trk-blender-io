@@ -1,6 +1,7 @@
 import bpy, bmesh, os
 import mathutils
 import base64
+import time
 from bpy import context
 from mathutils import Vector
 from ..crashday import cfl, trk
@@ -16,21 +17,36 @@ def error_no_cdp3d(self, context):
 # cutting
 # https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
 
-def slice(bm, start, end, segments):
+def new_object(bm, original_ob, i):
+    me = bpy.data.meshes.new(str(original_ob.name) + '_' + str(i))
+    bm.to_mesh(me)
+    ob = bpy.data.objects.new(str(original_ob.name) + '_' + str(i), me)
+    ob.location = original_ob.location
+    bpy.context.scene.collection.objects.link(ob)
+    return ob
+
+def slice(bisect_outer, original_ob, start, end, segments, new_objects):
     def geom(bm):
         return bm.verts[:] + bm.edges[:] + bm.faces[:]
 
     planes = [start.lerp(end, f / segments) for f in range(1, segments)]
     plane_normal = (end - start).normalized()
 
-    for p in planes:              
-        ret = bmesh.ops.bisect_plane(bm,geom=geom(bm),
-                plane_co=p,plane_no=plane_normal)
-        edges = [e for e in ret['geom_cut'] if isinstance(e, bmesh.types.BMEdge)]
-        verts = [v for v in ret['geom_cut'] if isinstance(v, bmesh.types.BMVert)]
-        bmesh.ops.split_edges(bm, edges, verts)
+    #bisect_outer = bm.copy()
 
-        
+    for i, p in enumerate(planes):
+        bisect_inner = bisect_outer.copy()
+
+        bmesh.ops.bisect_plane(bisect_outer,geom=geom(bisect_outer),
+                plane_co=p,plane_no=plane_normal, clear_inner=True)
+
+        bmesh.ops.bisect_plane(bisect_inner,geom=geom(bisect_inner),
+                plane_co=p,plane_no=plane_normal, clear_outer=True)
+
+        if len(geom(bisect_inner)) > 0:
+            new_objects.append(new_object(bisect_inner, original_ob, i))
+        bisect_inner.free()
+    bisect_outer.free()
 
 def create_folders(filepath):
     def dir(filepath):
@@ -49,7 +65,8 @@ def slice_separate_objects(context, use_selection=False):
     trk_width = context.scene.cdtrk.width
     trk_height = context.scene.cdtrk.height
 
-    print('-slice start-')
+    time_start = time.time()
+    print('-slice start- %.4f' % (time.time()))
 
     objects = []
     for ob in col.all_objects:
@@ -60,11 +77,13 @@ def slice_separate_objects(context, use_selection=False):
             elif ob.select_get():
                 objects.append(ob)
 
-    print('got {} scene objects'.format(len(objects)))
+    print('Got {} scene objects'.format(len(objects)))
 
     o = Vector((-(trk_width/2.0)*20, (trk_height/2.0)*20, 0.0))
     x = Vector(( (trk_width/2.0)*20, (trk_height/2.0)*20, 0.0))
     y = Vector((-(trk_width/2.0)*20, -(trk_height/2.0)*20, 0.0))
+
+    total_new_objects = []
 
     for ob in objects:
         if ob.type == 'MESH':
@@ -72,17 +91,21 @@ def slice_separate_objects(context, use_selection=False):
             me = ob.data
             bm.from_mesh(me)
 
-            slice(bm, o - ob.location, x - ob.location, trk_width)
-            slice(bm, o - ob.location, y - ob.location, trk_height)
-            bm.to_mesh(me)
+            new_objects = []
 
-            print('done slicing mesh: {}'.format(ob.name))
+            slice(bm, ob, o - ob.location, x - ob.location, trk_width, new_objects)
+            for nob in new_objects:
+                nbm = bmesh.new()
+                nbm.from_mesh(nob.data)
+                _ = []
+                slice(nbm, nob, o - nob.location, y - nob.location, trk_height, _)
 
-            ob.select_set(True)
-            bpy.ops.mesh.separate(type='LOOSE')
-            ob.select_set(False)
+            total_new_objects.extend(new_objects)
 
-            print('loose parts separated\n')
+            print('Done slicing in: {:.2f} \tmesh: {}'.format(time.time() - time_start, ob.name))
+
+    bpy.ops.object.delete({'selected_objects': objects})
+    bpy.ops.object.delete({'selected_objects': total_new_objects})
 
     print('-slice end-')
 
@@ -110,7 +133,7 @@ def separate_objects_into_collections(context, use_selection=False):
             elif ob.select_get():
                 objects.append(ob)
 
-    print('got all objects again')
+    print('Got all objects again')
 
     def get_grid_position(pos):
         def clamp(num, min_value, max_value):
@@ -272,12 +295,12 @@ def export_trk_file(work_path, file_path, context):
     track.write(file)
     track.close()
 
-def export_trk(operator, context, file_path='',
+def export_trk(operator, context, filepath='',
                 use_selection=False,
                 use_mesh_modifiers=False):
 
-    work_path = '\\'.join(file_path.split('\\')[0:-1])
-    print('\nExporting trk to {}'.format(file_path))
+    work_path = '\\'.join(filepath.split('\\')[0:-1])
+    print('\nExporting trk to {}'.format(filepath))
 
     create_folders(work_path)
 
@@ -289,7 +312,9 @@ def export_trk(operator, context, file_path='',
     slice_separate_objects(context, use_selection)
 
     # separate all sliced object into corresponding collections
-    separate_objects_into_collections(context, use_selection=use_selection)
+    #separate_objects_into_collections(context, use_selection=use_selection)
+
+    return
 
     # TODO: check if floor_level exists
     obj = bpy.data.objects.new('floor_level', None)
@@ -303,7 +328,7 @@ def export_trk(operator, context, file_path='',
 
     cp_pos = (int(w/2), int(h/2))
 
-    export_trk_file(work_path, file_path, context)
+    export_trk_file(work_path, filepath, context)
     export_cfl_files(work_path, h, w, [cp_pos],context)
     export_p3d_files(work_path, use_mesh_modifiers, h, w, context)
 

@@ -27,6 +27,10 @@ You should have a main mesh on every tile after cutting. If no main mesh was pre
 **Answer:** Apply rotations and scaling to the objects.
 
 ## TODO:
+- add error checking in crashday .py files
+- check length's on export in trk, p3d.py
+- need to optimise and clean splitting, need to remove collections.
+- Possibly shouldn't actually edit the scene
 - add placeholder icons for editor
 - add checkpoint stuff
 - add limits to the trk options in blender
