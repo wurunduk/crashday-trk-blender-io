@@ -38,3 +38,21 @@ class CDTRKProps(bpy.types.PropertyGroup):
 
     def register():
         bpy.types.Scene.cdtrk = bpy.props.PointerProperty(type=CDTRKProps)
+
+class CDTRKGridProps(bpy.types.PropertyGroup):
+    enabled         : bpy.props.BoolProperty (
+        name        = 'enabled',
+        default     = True
+    )
+
+    color           : bpy.props.FloatVectorProperty (
+        name        = 'color',
+        subtype     = 'COLOR',
+        default     = (0.28, 0.56, 0.06, 1.0),
+        size        = 4,
+        min         = 0.0, 
+        max         = 1.0
+    )
+
+    def register():
+        bpy.types.Scene.cdtrk_grid = bpy.props.PointerProperty(type=CDTRKGridProps)

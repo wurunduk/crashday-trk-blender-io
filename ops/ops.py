@@ -1,4 +1,7 @@
 import bpy
+import gpu
+import bgl
+from gpu_extras.batch import batch_for_shader
 
 from bpy.props import (
         BoolProperty,
@@ -46,3 +49,27 @@ class EXPORT_OT_cdtrk(bpy.types.Operator, ExportHelper):
         export_trk.export_trk(self, context, **keywords)
 
         return {'FINISHED'}
+
+def draw_callback():
+    if bpy.context:
+        trk = bpy.context.scene.cdtrk
+        settings = bpy.context.scene.cdtrk_grid
+
+        if settings.enabled:
+            vertices = []
+            for i in range(trk.height + 1):
+                vertices.append((-(trk.width/2.0)*20, -(trk.height/2.0)*20 + i*20, 0.0))
+                vertices.append(( (trk.width/2.0)*20, -(trk.height/2.0)*20 + i*20, 0.0))
+
+            for i in range(trk.width + 1):
+                vertices.append((-(trk.width/2.0)*20 + i*20, -(trk.height/2.0)*20, 0.0))
+                vertices.append((-(trk.width/2.0)*20 + i*20,  (trk.height/2.0)*20, 0.0))
+
+            shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+            batch = batch_for_shader(shader, 'LINES', {'pos': vertices})
+
+            shader.bind()
+            shader.uniform_float("color", settings.color)
+            batch.draw(shader)
+        
+    

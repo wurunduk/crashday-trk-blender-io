@@ -17,22 +17,20 @@ def error_no_cdp3d(self, context):
 # https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
 
 def slice(bm, start, end, segments):
-    if segments == 1:
-        return
     def geom(bm):
         return bm.verts[:] + bm.edges[:] + bm.faces[:]
-    planes = [start.lerp(end, f / segments) for f in range(1, segments)]
 
-    plane_no = (end - start).normalized() 
-    while planes: 
-        p0 = planes.pop(0)                 
-        ret = bmesh.ops.bisect_plane(bm, 
-                geom=geom(bm),
-                plane_co=p0, 
-                plane_no=plane_no)
-        bmesh.ops.split_edges(bm, 
-                edges=[e for e in ret['geom_cut'] 
-                if isinstance(e, bmesh.types.BMEdge)])
+    planes = [start.lerp(end, f / segments) for f in range(1, segments)]
+    plane_normal = (end - start).normalized()
+
+    for p in planes:              
+        ret = bmesh.ops.bisect_plane(bm,geom=geom(bm),
+                plane_co=p,plane_no=plane_normal)
+        edges = [e for e in ret['geom_cut'] if isinstance(e, bmesh.types.BMEdge)]
+        verts = [v for v in ret['geom_cut'] if isinstance(v, bmesh.types.BMVert)]
+        bmesh.ops.split_edges(bm, edges, verts)
+
+        
 
 def create_folders(filepath):
     def dir(filepath):
@@ -64,18 +62,18 @@ def slice_separate_objects(context, use_selection=False):
 
     print('got {} scene objects'.format(len(objects)))
 
+    o = Vector((-(trk_width/2.0)*20, (trk_height/2.0)*20, 0.0))
+    x = Vector(( (trk_width/2.0)*20, (trk_height/2.0)*20, 0.0))
+    y = Vector((-(trk_width/2.0)*20, -(trk_height/2.0)*20, 0.0))
+
     for ob in objects:
         if ob.type == 'MESH':
             bm = bmesh.new()
             me = ob.data
             bm.from_mesh(me)
 
-            o = Vector((-(trk_width/2.0)*20, (trk_height/2.0)*20, 0.0)) - ob.location
-            x = Vector(( (trk_width/2.0)*20, (trk_height/2.0)*20, 0.0)) - ob.location
-            y = Vector((-(trk_width/2.0)*20, -(trk_height/2.0)*20, 0.0)) - ob.location
-
-            slice(bm, o, x, trk_width)
-            slice(bm, o, y, trk_height)
+            slice(bm, o - ob.location, x - ob.location, trk_width)
+            slice(bm, o - ob.location, y - ob.location, trk_height)
             bm.to_mesh(me)
 
             print('done slicing mesh: {}'.format(ob.name))
