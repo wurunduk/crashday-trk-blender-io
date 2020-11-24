@@ -228,7 +228,8 @@ def export_p3d_files(work_path, use_mesh_modifiers, context, tiles_dict):
 
         try:
             bpy.ops.export_scene.cdp3d(filepath=work_path + '\\content\\models\\' + tile_name + '.p3d',
-            use_selection=True, use_mesh_modifiers=use_mesh_modifiers, use_empty_for_floor_level=True)
+            use_selection=True, use_mesh_modifiers=use_mesh_modifiers, use_empty_for_floor_level=True,
+            bbox_mode='ALL', force_main_mesh=True)
         except AttributeError:
             bpy.context.window_manager.popup_menu(error_no_cdp3d, title='No p3d plugin found!', icon='ERROR')
 
