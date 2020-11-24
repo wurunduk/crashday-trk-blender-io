@@ -18,16 +18,14 @@ def error_no_cdp3d(self, context):
 # https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
 
 def new_object(bm, original_ob, new_name):
-    ob = original_ob.copy()
-    ob.name = new_name
-    ob.data = original_ob.data.copy()
+    me = bpy.data.meshes.new(new_name)
+    bm.to_mesh(me)
+
+    ob = bpy.data.objects.new(new_name, me)
+
     ob.data.materials.clear() # ensure the target material slots are clean
     for mat in original_ob.data.materials:
         ob.data.materials.append(mat)
-
-    bm.to_mesh(ob.data)
-
-    ob.data.update()
     return ob
 
 def slice(bisect_outer, original_ob, start, end, segments, new_objects):
@@ -96,7 +94,7 @@ def slice_objects(context, tiles_dict, use_selection=False):
         ob.matrix_world.translation += new_origin
 
     time_start = time.time()
-    print('-slice start- %.4f' % (time.time()))
+    print('-slice start-')
 
     objects = []
     for ob in col.all_objects:
@@ -132,10 +130,7 @@ def slice_objects(context, tiles_dict, use_selection=False):
                 slice(nbm, nob, o - nob.location, y - nob.location, trk_height, tile_objects)
                 nbm.free()
 
-            mb.free()
-
-            # this should refresh some parameters for newly created objects
-            bpy.context.view_layer.update()
+            bm.free()
 
             print('{:.2f}\t sliced object: {}\n -> split into {} meshes'.format(
                 time.time() - time_start, ob.name, len(tile_objects)))
@@ -149,7 +144,6 @@ def slice_objects(context, tiles_dict, use_selection=False):
                 local_bbox_center = 0.125 * sum((Vector(bv) for bv in b.bound_box), Vector())
                 global_bbox_center = b.matrix_world @ local_bbox_center
 
-                print('-->\\/ bbox center {} {}'.format(local_bbox_center, b.matrix_world))
                 pos = get_grid_position_by_world_pos(global_bbox_center)
 
                 if (pos[0], pos[1]) not in tiles_dict:
@@ -177,7 +171,8 @@ def slice_objects(context, tiles_dict, use_selection=False):
     for ob in total_vertical_slice_objects:
         bpy.data.objects.remove(ob)
     for ob in objects:
-        bpy.data.objects.remove(ob, do_unlink=True)
+        if ob.type == 'MESH':
+            bpy.data.objects.remove(ob, do_unlink=True)
     
     print('-slice end-')
 
