@@ -3,37 +3,53 @@ import bpy
 class CDTRKProps(bpy.types.PropertyGroup):
     author          : bpy.props.StringProperty (
         name        = 'Author',
-        default     = 'wurunduk :)'
+        default     = 'Author'
     )
 
     comment         : bpy.props.StringProperty (
         name        = 'Comment',
-        default     = ''
+        default     = 'Made with wurun\'s blender .trk exporter'
     )
 
     style           : bpy.props.IntProperty (
         name        = 'Style',
-        default     = 0
+        description = 'Which modes this track is available in. Leave at 0 for all modes.',
+        default     = 0,
+        min         = 0,
+        max         = 128
     )    
 
     ambience        : bpy.props.StringProperty (
         name        = 'Ambience',
-        default     = ''
+        description = 'Ambience file to be used by default. This field is overwritten by the in-game setting',
+        default     = 'day.amb'
     )
 
-    scenery         : bpy.props.IntProperty (
+    scenery         : bpy.props.EnumProperty (
         name        = 'Scenery',
-        default     = 0
+        description = 'Background scenery used in game',
+        items       = (
+            ('0',     'Highlands', '', 0),
+            ('1',     'The Alps', '', 1),
+            ('2',     'Race Track', '', 2)
+        ),
+        default     = '0'
     )
 
     width           : bpy.props.IntProperty (
         name        = 'Width',
-        default     = 5
+        default     = 5,
+        min         = 3,
+        max         = 90,
+        soft_max    = 40
     )
 
     height          : bpy.props.IntProperty (
         name        = 'Height',
-        default     = 5
+        default     = 5,
+        min         = 3,
+        max         = 90,
+        soft_max    = 40
     )
 
     def register():
@@ -41,12 +57,12 @@ class CDTRKProps(bpy.types.PropertyGroup):
 
 class CDTRKGridProps(bpy.types.PropertyGroup):
     enabled         : bpy.props.BoolProperty (
-        name        = 'enabled',
+        name        = 'Enabled',
         default     = True
     )
 
     color           : bpy.props.FloatVectorProperty (
-        name        = 'color',
+        name        = 'Color',
         subtype     = 'COLOR',
         default     = (0.28, 0.56, 0.06, 1.0),
         size        = 4,

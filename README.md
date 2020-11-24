@@ -27,6 +27,10 @@ You should have a main mesh on every tile after cutting. If no main mesh was pre
 **Answer:** Apply rotations and scaling to the objects.
 
 ## TODO:
+- check if properly works with collections e.g. sort parts of a mesh in some collection into that collection
+- fully copy original mesh on division
+- add option to leave the meshes as they were or to split after export
+- rexeporting the map should work faster and deal the same result
 - add error checking in crashday .py files
 - check length's on export in trk, p3d.py
 - need to optimise and clean splitting, need to remove collections.
