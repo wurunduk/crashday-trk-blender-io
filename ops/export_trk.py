@@ -36,17 +36,23 @@ def slice(bisect_outer, original_ob, start, end, segments, new_objects):
     plane_normal = (end - start).normalized()
 
     for i, p in enumerate(planes):
+        # bisect_plane cuts away a part of the mesh.
+        # so create a copy of the mesh we want to cut, and cut away one and then the other side of said mesh
         bisect_inner = bisect_outer.copy()
 
         bmesh.ops.bisect_plane(bisect_outer,geom=geom(bisect_outer),
-                plane_co=p, plane_no=plane_normal, clear_inner=True)
+                plane_co=p, plane_no=plane_normal, clear_inner=True, clear_outer=False)
 
         bmesh.ops.bisect_plane(bisect_inner,geom=geom(bisect_inner),
-                plane_co=p, plane_no=plane_normal, clear_outer=True)
+                plane_co=p, plane_no=plane_normal, clear_inner=False, clear_outer=True)
 
         if len(geom(bisect_inner)) > 0:
             new_objects.append(new_object(bisect_inner, original_ob, original_ob.name + '_' + str(i)))
         bisect_inner.free()
+
+    # left over is the last slice of the object
+    if len(geom(bisect_outer)) > 0:
+        new_objects.append(new_object(bisect_outer, original_ob, original_ob.name + '_' + str(segments)))
     bisect_outer.free()
 
 def create_folders(filepath):
@@ -132,8 +138,8 @@ def slice_objects(context, tiles_dict, use_selection=False):
 
             bm.free()
 
-            print('{:.2f}\t sliced object: {}\n -> split into {} meshes'.format(
-                time.time() - time_start, ob.name, len(tile_objects)))
+            print('sliced object: {} in {:.2f} seconds\n -> split into {} meshes'.format(
+                ob.name, time.time() - time_start, len(tile_objects)))
             print(' - {}'.format(ob.matrix_world))
             for b in tile_objects:
                 # without this checks it somehow threw an error that the object was already in the collection
@@ -141,7 +147,7 @@ def slice_objects(context, tiles_dict, use_selection=False):
                 if b not in ob.users_collection[0].objects.keys():
                     ob.users_collection[0].objects.link(b)
 
-                local_bbox_center = 0.125 * sum((Vector(bv) for bv in b.bound_box), Vector())
+                local_bbox_center = 0.125 * sum((Vector(bv) for bv in b.bound_box), Vector()) # TODO2024: wtf is 0.125?
                 global_bbox_center = b.matrix_world @ local_bbox_center
 
                 pos = get_grid_position_by_world_pos(global_bbox_center)
@@ -171,8 +177,12 @@ def slice_objects(context, tiles_dict, use_selection=False):
     for ob in total_vertical_slice_objects:
         bpy.data.objects.remove(ob)
     for ob in objects:
+        objects_removed = 0
         if ob.type == 'MESH':
             bpy.data.objects.remove(ob, do_unlink=True)
+            objects_removed += 1
+
+    print('Removed {} temp vertical slices and {} original objects'.format(len(total_vertical_slice_objects), objects_removed))
 
     print('-slice end-')
 
@@ -247,7 +257,7 @@ def export_trk_file(work_path, file_path, context, tiles_dict):
     track.field_files = []
     track.track_tiles = []
 
-    # hardcoded start position for now, in tiles
+    # hardcoded start position for now, in tiles # TODO
     start_position = [int(track.width/2), int(track.height/2)]
 
     empty_tile_name = 'wvoid'
@@ -283,7 +293,7 @@ def export_trk_file(work_path, file_path, context, tiles_dict):
     track.field_files_num = len(track.field_files)
 
     track.checkpoints_num = 1
-    track.checkpoints = [start_position[0] + (track.height - 1 - start_position[1])*20]
+    track.checkpoints = [start_position[0] + (track.height - 1 - start_position[1])*track.width]
 
     track.heightmap = []
     for i in range(track.width*track.height*16 + (track.width + track.height)*4 + 1):
