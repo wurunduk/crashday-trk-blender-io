@@ -299,10 +299,13 @@ def export_trk(operator, context, filepath='',
                 use_selection=False,
                 use_mesh_modifiers=False):
 
-    work_path = '\\'.join(filepath.split('\\')[0:-1])
+    file_path = '\\'.join(filepath.split('\\')[0:-1])
+    file_name = filepath.split('\\')[-1]
+    res_path = file_path + '\\mod_testing\\' + file_name
     print('\nExporting trk to {}'.format(filepath))
+    print('\nResource path: {}'.format(res_path))
 
-    create_folders(work_path)
+    create_folders(res_path)
 
     # enter object mode
     if bpy.ops.object.mode_set.poll():
@@ -325,9 +328,9 @@ def export_trk(operator, context, filepath='',
 
     cp_pos = (int(w/2), int(h/2))
 
-    export_trk_file(work_path, filepath, context, tiles_dict)
-    export_cfl_files(work_path, context, [cp_pos], tiles_dict)
-    export_p3d_files(work_path, use_mesh_modifiers, context, tiles_dict)
+    export_trk_file(res_path, filepath, context, tiles_dict)
+    export_cfl_files(res_path, context, [cp_pos], tiles_dict)
+    export_p3d_files(res_path, use_mesh_modifiers, context, tiles_dict)
 
     print('Finished exporting .trk')
 
