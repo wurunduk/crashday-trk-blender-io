@@ -39,7 +39,7 @@ class TrackTile:
         ) = rf(file, '<H3B')
 
     def write(self, file):
-        wf(file, '<H3B', self.field_id, 
+        wf(file, '<H3B', self.field_id,
         self.rotation, self.is_mirrored, self.height)
 
 class DynamicObject:
@@ -142,7 +142,7 @@ checkpoints: {}\n{}
         self.style = r('<B')
         self.ambience = r_str()
         self.field_files_num = r('<H')
-        
+
         for i in range(self.field_files_num):
             self.field_files.append(r_str())
 

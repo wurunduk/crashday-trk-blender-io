@@ -86,9 +86,9 @@ def slice_objects(context, tiles_dict, use_selection=False):
     trk_width = context.scene.cdtrk.width
     trk_height = context.scene.cdtrk.height
 
-    def move_origin_to_tile_position(ob, tile_position): 
-        new_origin = Vector(((tile_position[0] - trk_width/2)*20 + 10, 
-                            (tile_position[1] - trk_height/2)*20 + 10, 
+    def move_origin_to_tile_position(ob, tile_position):
+        new_origin = Vector(((tile_position[0] - trk_width/2)*20 + 10,
+                            (tile_position[1] - trk_height/2)*20 + 10,
                             0.0)) - ob.location
         ob.data.transform(mathutils.Matrix.Translation(-new_origin))
         ob.matrix_world.translation += new_origin
@@ -173,12 +173,12 @@ def slice_objects(context, tiles_dict, use_selection=False):
     for ob in objects:
         if ob.type == 'MESH':
             bpy.data.objects.remove(ob, do_unlink=True)
-    
+
     print('-slice end-')
 
 def create_void_tile_files(path, name):
     void_model = 'UDNEAqCTGz0AGi04oJMbPVRFWDkFAAABdHJhbnNwLnRnYQBMSUdIVFM5BQAAAABNRVNIRVM5BQAAAQBTVUJNRVNIOQUAAG1haW4ADwAAAAAAAAAAAAAAAAAAAKCTGz0AGi04oJMbPQAAAgAAAAAAAAAAAAAABACgk5s8AAAAAKCTmzygk5u8AAAAAKCTmzygk5s8AAAAAKCTm7ygk5u8AAAAAKCTm7wCAAMAAAAAAAAAgD8AAAAAgD8AAAAAAQAAAAAAAAAAAAMAAAAAAAAAgD8CAAAAgD8AAIA/AAAAAIA/AAAAAFVTRVI5BQAAAAAAAA=='
-    
+
     # create and save .cfl
     c = cfl.CFL()
     c.tile_name = name
@@ -207,7 +207,7 @@ def export_cfl_files(work_path, context, checkpoints_list, tiles_dict):
         c.tile_name = tile_name
         c.model = tile_name + '.p3d'
         c.can_respawn = 1
-    
+
         if pos in checkpoints_list:
             c.is_checkpoint = 1
             c.checkpoint_area = (-8.5, 4, 8.5, 0)
@@ -246,7 +246,7 @@ def export_trk_file(work_path, file_path, context, tiles_dict):
 
     track.field_files = []
     track.track_tiles = []
-    
+
     # hardcoded start position for now, in tiles
     start_position = [int(track.width/2), int(track.height/2)]
 
@@ -272,7 +272,7 @@ def export_trk_file(work_path, file_path, context, tiles_dict):
                     track.field_files.append(empty_tile_name)
                     empty_index = len(track.field_files) - 1
                     create_void_tile_files(work_path, empty_tile_name)
-                
+
                 tt.field_id = empty_index
             else:
                 # non empty tile, just add to the list
@@ -288,7 +288,7 @@ def export_trk_file(work_path, file_path, context, tiles_dict):
     track.heightmap = []
     for i in range(track.width*track.height*16 + (track.width + track.height)*4 + 1):
         track.heightmap.append(0.0)
-    
+
     print('Finished building .trk')
 
     file = open(file_path, 'wb')
@@ -307,7 +307,7 @@ def export_trk(operator, context, filepath='',
     # enter object mode
     if bpy.ops.object.mode_set.poll():
         bpy.ops.object.mode_set(mode='OBJECT')
-    
+
     tiles_dict = {}
 
     #slice objects with tile grid

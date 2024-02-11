@@ -29,7 +29,7 @@ class CFL:
         file.write(str(self.is_checkpoint) + '\n')
         if self.is_checkpoint:
             file.write('{:.4g} {:.4g} {:.4g} {:.4g}\n'.format(
-                self.checkpoint_area[0], self.checkpoint_area[1], 
+                self.checkpoint_area[0], self.checkpoint_area[1],
                 self.checkpoint_area[2], self.checkpoint_area[3]))
         file.write(str(self.ai_free_roam) + '\n')
         file.write(self.dynamics_drop_height  + '\n')

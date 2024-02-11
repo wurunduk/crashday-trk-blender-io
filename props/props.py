@@ -17,7 +17,7 @@ class CDTRKProps(bpy.types.PropertyGroup):
         default     = 0,
         min         = 0,
         max         = 128
-    )    
+    )
 
     ambience        : bpy.props.StringProperty (
         name        = 'Ambience',
@@ -66,7 +66,7 @@ class CDTRKGridProps(bpy.types.PropertyGroup):
         subtype     = 'COLOR',
         default     = (0.28, 0.56, 0.06, 1.0),
         size        = 4,
-        min         = 0.0, 
+        min         = 0.0,
         max         = 1.0
     )
 
