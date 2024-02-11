@@ -65,7 +65,10 @@ def draw_callback():
                 vertices.append((-(trk.width/2.0)*20 + i*20, -(trk.height/2.0)*20, 0.0))
                 vertices.append((-(trk.width/2.0)*20 + i*20,  (trk.height/2.0)*20, 0.0))
 
-            shader = gpu.shader.from_builtin('POLYLINE_UNIFORM_COLOR')
+            if bpy.app.version < (4, 0, 0):
+                shader = gpu.shader.from_builtin('3D_UNIFORM_COLOR')
+            else:
+                shader = gpu.shader.from_builtin('UNIFORM_COLOR')
             batch = batch_for_shader(shader, 'LINES', {'pos': vertices})
 
             shader.bind()

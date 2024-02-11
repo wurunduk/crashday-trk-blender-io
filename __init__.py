@@ -37,7 +37,7 @@ def register():
         bpy.utils.register_class(cls)
 
     bpy.types.TOPBAR_MT_file_export.append(menu_func_export)
-    global handle 
+    global handle
     handle = bpy.types.SpaceView3D.draw_handler_add(
                 ops.draw_callback, (), 'WINDOW', 'POST_VIEW')
 
