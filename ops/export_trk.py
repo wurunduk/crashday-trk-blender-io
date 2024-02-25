@@ -80,7 +80,7 @@ def get_grid_position_by_world_pos(pos):
     int_x = int((x + (trk_width/2.0)*20)/20)
     if int_x == trk_width:
         int_x -=1
-    int_y = int((y + (trk_height/2.0)*20)/20)
+    int_y = int(((trk_height/2.0)*20 - y)/20)
     if int_y == trk_height:
         int_y -=1
 
