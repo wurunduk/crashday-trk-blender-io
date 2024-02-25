@@ -40,10 +40,10 @@ def slice(bisect_outer, original_ob, start, end, segments, new_objects):
         # so create a copy of the mesh we want to cut, and cut away one and then the other side of said mesh
         bisect_inner = bisect_outer.copy()
 
-        bmesh.ops.bisect_plane(bisect_outer,geom=geom(bisect_outer),
+        bmesh.ops.bisect_plane(bisect_outer,geom=geom(bisect_outer), dist=0.01,
                 plane_co=p, plane_no=plane_normal, clear_inner=True, clear_outer=False)
 
-        bmesh.ops.bisect_plane(bisect_inner,geom=geom(bisect_inner),
+        bmesh.ops.bisect_plane(bisect_inner,geom=geom(bisect_inner), dist=0.01,
                 plane_co=p, plane_no=plane_normal, clear_inner=False, clear_outer=True)
 
         if len(geom(bisect_inner)) > 0:
