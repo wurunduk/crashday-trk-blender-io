@@ -18,14 +18,21 @@ def error_no_cdp3d(self, context):
 # https://blender.stackexchange.com/questions/80460/slice-up-terrain-mesh-into-chunks/133258
 
 def new_object(bm, original_ob, new_name):
-    me = bpy.data.meshes.new(new_name)
-    bm.to_mesh(me)
+    new_mesh = bpy.data.meshes.new(new_name)
 
-    ob = bpy.data.objects.new(new_name, me)
+    bm.to_mesh(new_mesh)
+    ob = bpy.data.objects.new(new_name, new_mesh)
 
-    ob.data.materials.clear() # ensure the target material slots are clean
     for mat in original_ob.data.materials:
         ob.data.materials.append(mat)
+
+    material_indices = set()
+    for f in ob.data.polygons:
+        material_indices.add(f.material_index)
+    for i in range(len(ob.material_slots) - 1, -1, -1):
+        if i not in material_indices:
+            ob.data.materials.pop(index=i)
+
     return ob
 
 def slice(bisect_outer, original_ob, start, end, segments, new_objects):
@@ -40,6 +47,7 @@ def slice(bisect_outer, original_ob, start, end, segments, new_objects):
         # so create a copy of the mesh we want to cut, and cut away one and then the other side of said mesh
         bisect_inner = bisect_outer.copy()
 
+        # cant we do one bisect plane here?
         bmesh.ops.bisect_plane(bisect_outer,geom=geom(bisect_outer), dist=0.01,
                 plane_co=p, plane_no=plane_normal, clear_inner=True, clear_outer=False)
 
@@ -122,8 +130,7 @@ def slice_objects(context, tiles_dict, use_selection=False):
     for ob in objects:
         if ob.type == 'MESH':
             bm = bmesh.new()
-            me = ob.data
-            bm.from_mesh(me)
+            bm.from_mesh(ob.data)
 
             vertical_slices = []
 
