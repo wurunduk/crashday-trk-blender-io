@@ -52,7 +52,7 @@ def slice(bisect_outer, original_ob, start, end, segments, new_objects):
 
     # left over is the last slice of the object
     if len(geom(bisect_outer)) > 0:
-        new_objects.append(new_object(bisect_outer, original_ob, original_ob.name + '_' + str(segments)))
+        new_objects.append(new_object(bisect_outer, original_ob, original_ob.name + '_' + str(segments - 1)))
     bisect_outer.free()
 
 def create_folders(filepath):
