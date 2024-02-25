@@ -263,9 +263,11 @@ def export_trk_file(work_path, file_path, context, tiles_dict):
     empty_tile_name = 'wvoid'
 
     # fill tile list data
-    for pos in tiles_dict:
-        tile_name = get_tile_name(pos[0], pos[1])
-        track.field_files.append(tile_name)
+    for y in range(track.height):
+        for x in range(track.width):
+            if (x, y) in tiles_dict:
+                tile_name = get_tile_name(x, y)
+                track.field_files.append(tile_name)
 
     empty_index = -1
 
